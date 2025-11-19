@@ -41,7 +41,8 @@ pipeline {
 
                     cd ../${ANSIBLE_PATH}
                     echo "[servers]" > inventory.ini
-                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/terrakey" >> inventory.ini
+                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/terrakey ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
+
                 """
             }
         }
