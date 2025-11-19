@@ -7,8 +7,8 @@ terraform/terraform.tfstate.backup
 # Keys
 terraform/terrakey
 terraform/terrakey.pem
-terraform/terrakey.pub
 
 # macOS
 .DS_Store
+terraform/.DS_Store
 
