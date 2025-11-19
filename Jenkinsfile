@@ -26,10 +26,10 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                sh """
-                    cd ${TF_PATH}
-                    ${TERRAFORM} apply -auto-approve
-                """
+                    sh """
+                        cd ${TF_PATH}
+                        ${TERRAFORM} apply -auto-approve
+                    """
             }
         }
 
