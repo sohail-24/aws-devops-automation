@@ -4,20 +4,22 @@ pipeline {
     environment {
         TF_PATH = "terraform"
         ANSIBLE_PATH = "ansible"
+        PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/your-repo/aws-devops-automation.git'
+                git 'https://github.com/sohail-24/aws-devops-automation.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
                 sh """
-                cd ${TF_PATH}
-                terraform init
+                    cd ${TF_PATH}
+                    terraform init
                 """
             }
         }
@@ -25,8 +27,21 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 sh """
-                cd ${TF_PATH}
-                terraform apply -auto-approve
+                    cd ${TF_PATH}
+                    terraform apply -auto-approve
+                """
+            }
+        }
+
+        stage('Update Ansible Inventory') {
+            steps {
+                sh """
+                    cd ${TF_PATH}
+                    EC2_IP=\$(terraform output -raw ec2_public_ip)
+
+                    cd ../${ANSIBLE_PATH}
+                    echo "[servers]" > inventory.ini
+                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/terrakey" >> inventory.ini
                 """
             }
         }
@@ -34,8 +49,9 @@ pipeline {
         stage('Configure with Ansible') {
             steps {
                 sh """
-                cd ${ANSIBLE_PATH}
-                ansible-playbook -i inventory.ini setup.yml
+                    cd ${ANSIBLE_PATH}
+                    chmod 600 ../terraform/terrakey
+                    ansible-playbook -i inventory.ini setup.yml
                 """
             }
         }
