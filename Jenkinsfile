@@ -41,7 +41,7 @@ pipeline {
 
                     cd ../${ANSIBLE_PATH}
                     echo "[servers]" > inventory.ini
-                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/terrakey.pem" >> inventory.ini
+                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/terrakey" >> inventory.ini
                 """
             }
         }
@@ -50,7 +50,7 @@ pipeline {
             steps {
                 sh """
                     cd ${ANSIBLE_PATH}
-                    chmod 600 ../terraform/terrakey.pem
+                    chmod 600 ../terraform/terrakey
                     ansible-playbook -i inventory.ini setup.yml
                 """
             }
