@@ -4,7 +4,7 @@ pipeline {
     environment {
         TF_PATH = "terraform"
         ANSIBLE_PATH = "ansible"
-        KEY_ID = "terraform-key"
+        TERRAFORM = "/opt/homebrew/bin/terraform"
     }
 
     stages {
@@ -19,7 +19,7 @@ pipeline {
             steps {
                 sh """
                     cd ${TF_PATH}
-                    terraform init
+                    ${TERRAFORM} init
                 """
             }
         }
@@ -28,7 +28,7 @@ pipeline {
             steps {
                 sh """
                     cd ${TF_PATH}
-                    terraform apply -auto-approve
+                    ${TERRAFORM} apply -auto-approve
                 """
             }
         }
@@ -37,36 +37,12 @@ pipeline {
             steps {
                 sh """
                     cd ${TF_PATH}
-                    EC2_IP=\$(terraform output -raw ec2_public_ip)
+                    EC2_IP=\$(${TERRAFORM} output -raw ec2_public_ip)
 
                     cd ../${ANSIBLE_PATH}
                     echo "[servers]" > inventory.ini
-                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/tmp/terraform-key.pem" >> inventory.ini
+                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/terrakey.pem" >> inventory.ini
                 """
-            }
-        }
-
-        stage('Copy SSH Key to Workspace') {
-            steps {
-                withCredentials([sshUserPrivateKey(credentialsId: "${KEY_ID}", keyFileVariable: 'SSH_KEY')]) {
-                    sh "cp \$SSH_KEY /tmp/terraform-key.pem"
-                    sh "chmod 600 /tmp/terraform-key.pem"
-                }
-            }
-        }
-
-        stage('Wait for EC2 SSH Ready') {
-            steps {
-                sh '''
-                    EC2_IP=$(terraform -chdir=terraform output -raw ec2_public_ip)
-                    echo "Waiting for SSH..."
-
-                    for i in {1..12}; do
-                        ssh -o StrictHostKeyChecking=no -i /tmp/terraform-key.pem ubuntu@$EC2_IP "echo SSH OK" && break
-                        echo "Retrying in 10s..."
-                        sleep 10
-                    done
-                '''
             }
         }
 
@@ -74,6 +50,7 @@ pipeline {
             steps {
                 sh """
                     cd ${ANSIBLE_PATH}
+                    chmod 600 ../terraform/terrakey.pem
                     ansible-playbook -i inventory.ini setup.yml
                 """
             }
