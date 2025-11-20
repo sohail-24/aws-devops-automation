@@ -23,18 +23,16 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply Using Jenkins Credential Key') {
+        stage('Terraform Apply') {
             steps {
-                sshagent(['terra-key']) {
-                    sh """
-                    cd terraform
-                    terraform apply -auto-approve
-                    """
-                }
+                sh """
+                cd terraform
+                terraform apply -auto-approve
+                """
             }
         }
 
-        stage('Extract EC2 Public IP From Terraform') {
+        stage('Extract EC2 Public IP') {
             steps {
                 script {
                     env.EC2_IP = sh(
@@ -42,39 +40,36 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
-                    echo "EC2 Public IP = ${env.EC2_IP}"
+                    echo "EC2 Public IP = ${EC2_IP}"
                 }
             }
         }
 
-        stage('Generate Ansible Inventory File') {
+        stage('Generate Ansible Inventory') {
             steps {
                 sh """
                 echo "[servers]" > ansible/inventory.ini
-                echo "my-ec2 ansible_host=${EC2_IP} ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> ansible/inventory.ini
+                echo "my-ec2 ansible_host=${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=\$WORKSPACE/terraform/generated_key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> ansible/inventory.ini
                 """
             }
         }
 
-        stage('Run Ansible Playbook With Jenkins SSH Key') {
+        stage('Run Ansible Playbook') {
             steps {
-                sshagent(['terra-key']) {
-                    sh """
-                    cd ansible
-                    ansible-playbook setup.yml -i inventory.ini
-                    """
-                }
+                sh """
+                cd ansible
+                ansible-playbook setup.yml -i inventory.ini
+                """
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline Completed Successfully!"
+            echo "✅ CI/CD Pipeline Completed Successfully"
         }
         failure {
-            echo "Pipeline Failed!"
+            echo "❌ Pipeline Failed - Check logs"
         }
     }
 }
-
