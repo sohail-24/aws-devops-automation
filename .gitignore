@@ -14,3 +14,5 @@ terraform/terrakey.pub
 .DS_Store
 terraform/.DS_Store
 
+# Ansible dynamic inventory
+ansible/inventory.ini
