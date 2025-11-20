@@ -2,63 +2,68 @@ pipeline {
     agent any
 
     environment {
-        TF_PATH = "terraform"
-        ANSIBLE_PATH = "ansible"
-        TERRAFORM = "/opt/homebrew/bin/terraform"
+        AWS_DEFAULT_REGION = "ap-south-1"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout From GitHub') {
             steps {
-                git branch: 'main', url: 'https://github.com/sohail-24/aws-devops-automation.git'
+                git branch: 'main',
+                    url: 'https://github.com/YOUR-USERNAME/YOUR-REPO.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
                 sh """
-                    cd ${TF_PATH}
-                    ${TERRAFORM} init -input=false
+                cd terraform
+                terraform init
                 """
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Terraform Apply Using Jenkins Credential Key') {
+            steps {
+                sshagent(['terra-key']) {
+                    sh """
+                    cd terraform
+                    terraform apply -auto-approve
+                    """
+                }
+            }
+        }
+
+        stage('Extract EC2 Public IP From Terraform') {
+            steps {
+                script {
+                    env.EC2_IP = sh(
+                        script: "cd terraform && terraform output -raw ec2_public_ip",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "EC2 Public IP = ${env.EC2_IP}"
+                }
+            }
+        }
+
+        stage('Generate Ansible Inventory File') {
             steps {
                 sh """
-                    cd ${TF_PATH}
-                    ${TERRAFORM} apply -auto-approve -input=false
+                echo "[servers]" > ansible/inventory.ini
+                echo "my-ec2 ansible_host=${EC2_IP} ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> ansible/inventory.ini
                 """
             }
         }
 
-        stage('Update Ansible Inventory') {
+        stage('Run Ansible Playbook With Jenkins SSH Key') {
             steps {
-                sh """
-                    cd ${TF_PATH}
-                    EC2_IP=\$(${TERRAFORM} output -raw ec2_public_ip)
-
-                    cd ../${ANSIBLE_PATH}
-
-                    # Create Ansible Inventory
-                    echo "[servers]" > inventory.ini
-                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${WORKSPACE}/terraform/terrakey ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
-                """
-            }
-        }
-
-        stage('Configure with Ansible') {
-            steps {
-                sh """
-                    cd ${ANSIBLE_PATH}
-
-                    # Fix private key permissions
-                    chmod 600 ${WORKSPACE}/terraform/terrakey
-
-                    # Run playbook
-                    ansible-playbook -i inventory.ini setup.yml
-                """
+                sshagent(['terra-key']) {
+                    sh """
+                    cd ansible
+                    ansible-playbook setup.yml -i inventory.ini
+                    """
+                }
             }
         }
     }
@@ -72,3 +77,4 @@ pipeline {
         }
     }
 }
+
