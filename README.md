@@ -38,20 +38,20 @@ Ansible → Configure EC2 Server
 
 ## 📂 Repository Structure
 
-aws-devops-automation/
-│
-├── ansible/
-│   ├── roles/
-│   ├── setup.yml
-│   └── inventory.ini (auto-generated in pipeline)
-│
-├── terraform/
-│   ├── main.tf
-│   ├── provider.tf
-│   └── output.tf
-│
-├── Jenkinsfile
-└── README.md
+ aws-devops-automation/
+ │
+ ├── ansible/
+ │   ├── roles/
+ │   ├── setup.yml
+ │   └── inventory.ini (auto-generated in pipeline)
+ │
+ ├── terraform/
+ │   ├── main.tf
+ │   ├── provider.tf
+ │   └── output.tf
+ │
+ ├── Jenkinsfile
+ └── README.md
 
 
 ---
@@ -133,10 +133,10 @@ terraform destroy -auto-approve
 
 ## 📸 Sample Result
 
-✔ EC2 Instance Running
-✔ Ansible Configured
-✔ Jenkins Pipeline Success
-✔ SSH Secure Automation
+ ✔ EC2 Instance Running
+ ✔ Ansible Configured
+ ✔ Jenkins Pipeline Success
+ ✔ SSH Secure Automation
 
 ---
 
