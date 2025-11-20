@@ -51,7 +51,7 @@ pipeline {
             steps {
                 sh """
                     cd ${ANSIBLE_PATH}
-                    chmod 600 ../terraform/terrakey
+                    chmod 600 /Users/sohal/sohail-work/terraform-project/aws-devops-automation/terraform/terrakey
                     ansible-playbook -i inventory.ini setup.yml
                 """
             }
