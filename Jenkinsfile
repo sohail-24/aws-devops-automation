@@ -19,17 +19,17 @@ pipeline {
             steps {
                 sh """
                     cd ${TF_PATH}
-                    ${TERRAFORM} init
+                    ${TERRAFORM} init -input=false
                 """
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                    sh """
-                        cd ${TF_PATH}
-                        ${TERRAFORM} apply -auto-approve
-                    """
+                sh """
+                    cd ${TF_PATH}
+                    ${TERRAFORM} apply -auto-approve -input=false
+                """
             }
         }
 
@@ -40,9 +40,10 @@ pipeline {
                     EC2_IP=\$(${TERRAFORM} output -raw ec2_public_ip)
 
                     cd ../${ANSIBLE_PATH}
-                    echo "[servers]" > inventory.ini
-                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/Users/sohal/sohail-work/terraform-project/aws-devops-automation/terraform/terrakey ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
 
+                    # Create Ansible Inventory
+                    echo "[servers]" > inventory.ini
+                    echo "my-ec2 ansible_host=\${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=${WORKSPACE}/terraform/terrakey ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
                 """
             }
         }
@@ -51,7 +52,11 @@ pipeline {
             steps {
                 sh """
                     cd ${ANSIBLE_PATH}
-                    chmod 600 /Users/sohal/sohail-work/terraform-project/aws-devops-automation/terraform/terrakey
+
+                    # Fix private key permissions
+                    chmod 600 ${WORKSPACE}/terraform/terrakey
+
+                    # Run playbook
                     ansible-playbook -i inventory.ini setup.yml
                 """
             }
@@ -67,4 +72,3 @@ pipeline {
         }
     }
 }
-
