@@ -45,6 +45,23 @@ pipeline {
             }
         }
 
+        stage('Wait For SSH') {
+            steps {
+                script {
+                    sh """
+                    echo "Waiting for SSH to be ready on ${EC2_IP}..."
+                    for i in {1..30}; do
+                      nc -zv ${EC2_IP} 22 && echo "✅ SSH is Ready" && exit 0
+                      echo "SSH not ready yet... retrying in 10s"
+                      sleep 10
+                    done
+                    echo "❌ SSH did not become ready"
+                    exit 1
+                    """
+                }
+            }
+        }
+
         stage('Generate Ansible Inventory') {
             steps {
                 sh """
@@ -66,10 +83,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ CI/CD Pipeline Completed Successfully"
+            echo "✅ PIPELINE COMPLETED SUCCESSFULLY"
         }
         failure {
-            echo "❌ Pipeline Failed - Check logs"
+            echo "❌ PIPELINE FAILED - CHECK LOGS"
         }
     }
 }
