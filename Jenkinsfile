@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout From GitHub') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/YOUR-USERNAME/YOUR-REPO.git'
+                    url: 'https://github.com/sohail-24/aws-devops-automation.git'
             }
         }
 
